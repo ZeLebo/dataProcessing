@@ -13,6 +13,7 @@ fun main() {
                 println("thread has been interrupted")
                 Thread.sleep(1000)
                 println("bye")
+                break 
             }
         }
     }
