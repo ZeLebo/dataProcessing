@@ -1,15 +1,16 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+import java.util.concurrent.BrokenBarrierException;
 
 
 class lab6 {
     lab6(){}
     public static void main(String[] args) {
-        int n = ThreadLocalRandom.current().nextInt(1, 7);
-       Company company = new Company(n);
-       company.showCollaborativeResult();
+        new Founder(new Company(ThreadLocalRandom.current().nextInt(1, 100))).start();
     }
 }
 
@@ -102,14 +103,40 @@ class Department {
     
 final class Founder {
     private final List<Runnable> workers;
+    private final CyclicBarrier barrier;
 
     public Founder(final Company company) {
         this.workers = new ArrayList<>(company.getDepartmentsCount());
+        barrier = new CyclicBarrier(company.getDepartmentsCount(), () -> {
+            company.showCollaborativeResult();
+        });
+        IntStream.range(0, company.getDepartmentsCount()).forEach(index -> workers.add(new Worker(company.getFreeDepartment(index), barrier)));
+
     }
     
     public void start() {
         for (final Runnable worker : workers) {
             new Thread(worker).start();
+        }
+    }
+}
+
+class Worker implements Runnable {
+    private Department department;
+    private CyclicBarrier barrier;
+
+    public Worker(Department department, CyclicBarrier barrier) {
+        this.department = department;
+        this.barrier = barrier;
+    }
+
+    @Override
+    public void run() {
+        department.performCalculations();
+        try {
+            barrier.await();
+        } catch (InterruptedException | BrokenBarrierException e) {
+            System.out.println("Something has broken me down");
         }
     }
 }
