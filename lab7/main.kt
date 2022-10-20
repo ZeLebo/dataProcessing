@@ -1,4 +1,3 @@
-package org.example;
 
 // the program has to count PI number using row of Leibniz formula
 // the amount of thread is given as a command line argument 

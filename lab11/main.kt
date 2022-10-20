@@ -1,4 +1,4 @@
-package org.example
+package lab11
 
 import java.util.concurrent.Semaphore
 
