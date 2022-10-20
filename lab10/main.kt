@@ -1,4 +1,4 @@
-package org.example
+package lab10.locks
 
 fun main() {
     val lock = Object()
