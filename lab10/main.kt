@@ -1,67 +1,29 @@
-package lab10
-
-import java.util.concurrent.locks.ReentrantLock
+package org.example
 
 fun main() {
-    val mutex = ReentrantLock()
-    val asyncCondition = mutex.newCondition()
+    val lock = Object()
+    var switch = false
 
-    // print string in 2 threads on by one in order
+    fun work() {
+        println("Current thread is ${Thread.currentThread().name}")
+        switch = !switch
+        lock.notify()
+    }
+
     Thread {
-        for (i in 1..10) {
-            mutex.lock()
-            println("Second thread $i")
-            asyncCondition.signal()
-            asyncCondition.await()
-            mutex.unlock()
-        }
+       Thread.currentThread().name = "Not main"
+       for (i in 1..10) {
+           synchronized(lock) {
+               while (!switch) lock.wait()
+               work()
+           }
+       }
     }.start()
 
-    mutex.lock()
-    asyncCondition.signal()
-    asyncCondition.await()
-    mutex.unlock()
-
     for (i in 1..10) {
-        mutex.lock()
-        println("Main thread $i")
-        asyncCondition.signal()
-        asyncCondition.await()
-        // asyncCondition.signal()
-        mutex.unlock()
+        synchronized(lock) {
+            while (switch) lock.wait()
+            work()
+        }
     }
-    
-    // val lock = Object()
-    // var switcher = false
-    // Thread {
-    //     for (i in 1..10) {
-    //         synchronized(lock) {
-    //             while(!switcher) {
-    //                 lock.wait()
-    //             }
-    //         }
-
-    //         println("Second thread $i")
-
-    //         synchronized(lock) {
-    //             switcher = false
-    //             lock.notifyAll()
-    //         }
-    //     }
-    // }.start()
-
-    // for (i in 1..10) {
-    //     synchronized(lock) {
-    //         while(switcher) {
-    //             lock.wait()
-    //         }
-    //     }
-
-    //     println("Main thread $i")
-
-    //     synchronized(lock) {
-    //         switcher = true
-    //         lock.notifyAll()
-    //     }
-    // }
 }
