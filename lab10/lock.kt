@@ -2,6 +2,7 @@ package lab10
 
 import java.util.concurrent.locks.ReentrantLock
 
+// printing string in a row with lock
 fun main() {
     val mutex = ReentrantLock()
     val asyncCondition = mutex.newCondition()
@@ -13,7 +14,9 @@ fun main() {
         mutex.lock()
         sendMessage(i)
 
+        // send the signal to the second thread to send the message
         asyncCondition.signal()
+        // await the signal from the second thread
         asyncCondition.await()
         mutex.unlock()
     }
@@ -30,6 +33,6 @@ fun main() {
     }
 
     mutex.lock()
-    asyncCondition.signal()
+    asyncCondition.signalAll()
     mutex.unlock()
 }

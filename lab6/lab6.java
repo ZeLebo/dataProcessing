@@ -107,6 +107,7 @@ final class Founder {
 
     public Founder(final Company company) {
         this.workers = new ArrayList<>(company.getDepartmentsCount());
+        // the same as golang sync.WaitGroup
         barrier = new CyclicBarrier(company.getDepartmentsCount(), () -> {
             company.showCollaborativeResult();
         });
@@ -134,6 +135,7 @@ class Worker implements Runnable {
     public void run() {
         department.performCalculations();
         try {
+            // golang sync.WaitGroup.Done()
             barrier.await();
         } catch (InterruptedException | BrokenBarrierException e) {
             System.out.println("Something has broken me down");

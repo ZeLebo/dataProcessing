@@ -9,6 +9,8 @@ fun main(args: Array<String>) {
     var threadIterations = (iterCount.toDouble() / threadsCount).toInt()
     val results = Array(threadsCount) { 0.0 }
 
+    // count the values of formula by iterations for each thread
+    // then sum the results
     val threads = (0 until threadsCount).map { i ->
         Thread {
             var result = 0.0
