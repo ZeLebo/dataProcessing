@@ -1,4 +1,4 @@
-package phylosophersMatIh
+package philosophersMatIh
 
 import java.util.concurrent.Semaphore
 class Fork(val id: Int) {
@@ -15,7 +15,7 @@ class Fork(val id: Int) {
     }
 }
 
-class Phylosopher(name: String, val left: Fork, val right: Fork): Thread(name) {
+class Philosopher(name: String, val left: Fork, val right: Fork): Thread(name) {
     fun puttingForksDeadlock(): Boolean {
         if (!right.tryAcquire()) {
             left.put()
@@ -26,13 +26,14 @@ class Phylosopher(name: String, val left: Fork, val right: Fork): Thread(name) {
     }
 
     // making deadlock
-    override fun run() {
+    fun runDeadlock() {
         try {
         while (true) {
             println("$name is thinking")
             Thread.sleep(1000)
             left.take()
             println("$name took left fork id = ${left.id}")
+            Thread.sleep(2000)
             // the first and naive solution to the problem
             // if the fork is not avaliable, put the fork back and wait some time
             // if (puttingForksDeadlock()) {
@@ -49,12 +50,12 @@ class Phylosopher(name: String, val left: Fork, val right: Fork): Thread(name) {
             println("$name put right fork id = ${right.id}")
         }
         } catch (e: InterruptedException) {
-            println("Phylosopher $name was forced to stop eating")
+            println("Philosopher $name was forced to stop eating")
         }
     }
 
     // witout deadlock
-    fun run2() {
+    fun runWihoutDeadlock() {
         try {
             // deikstra solution
             // firstly take the fork with the lowest id
@@ -89,19 +90,24 @@ class Phylosopher(name: String, val left: Fork, val right: Fork): Thread(name) {
             println("Phylosopher $name was forced to stop eating")
         }
     }
+
+    override fun run() {
+//        this.runWihoutDeadlock()
+        this.runDeadlock()
+    }
 }
 
 fun main() {
     val forks = Array(5) { Fork(it) }
-    val phylosophers = Array(5) {
-        Phylosopher("Phylosopher $it", forks[it], forks[(it + 1) % 5])
+    val philosophers = Array(5) {
+        Philosopher("Philosopher $it", forks[it], forks[(it + 1) % 5])
     }
-    phylosophers.forEach { it.start() }
+    philosophers.forEach { it.start() }
 
     // I just like this construction
     Runtime.getRuntime().addShutdownHook(Thread {
-        phylosophers.forEach { it.interrupt() }
+        philosophers.forEach { it.interrupt() }
 
-        println("\nWaiting for phylosophers to finish")
+        println("\nWaiting for philosophers to finish")
     })
 }
