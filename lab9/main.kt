@@ -1,9 +1,24 @@
 package philosophersMatIh
 
 import java.util.concurrent.Semaphore
-class Fork(val id: Int) {
-    private val semaphore = Semaphore(1)
+fun main() {
+    val forks = Array(5) { Fork(it) }
+    val philosophers = Array(5) {
+        Philosopher("Philosopher $it", forks[it], forks[(it + 1) % 5])
+    }
+    philosophers.forEach { it.start() }
 
+    // I just like this construction
+    Runtime.getRuntime().addShutdownHook(Thread {
+        philosophers.forEach { it.interrupt() }
+
+        println("\nWaiting for philosophers to finish")
+    })
+}
+
+class Fork(val id: Int) {
+
+    private val semaphore = Semaphore(1)
     fun take() {
         semaphore.acquire()
     }
@@ -68,7 +83,7 @@ class Philosopher(name: String, val left: Fork, val right: Fork): Thread(name) {
 
                 println("$name is thinking")
                 Thread.sleep(1000)
-                
+
                 // firstly take the fork with the lowest id
                 // secondly take the other fork
                 first.take()
@@ -90,24 +105,8 @@ class Philosopher(name: String, val left: Fork, val right: Fork): Thread(name) {
             println("Phylosopher $name was forced to stop eating")
         }
     }
-
     override fun run() {
-//        this.runWihoutDeadlock()
-        this.runDeadlock()
+        this.runWihoutDeadlock()
+//        this.runDeadlock()
     }
-}
-
-fun main() {
-    val forks = Array(5) { Fork(it) }
-    val philosophers = Array(5) {
-        Philosopher("Philosopher $it", forks[it], forks[(it + 1) % 5])
-    }
-    philosophers.forEach { it.start() }
-
-    // I just like this construction
-    Runtime.getRuntime().addShutdownHook(Thread {
-        philosophers.forEach { it.interrupt() }
-
-        println("\nWaiting for philosophers to finish")
-    })
 }
