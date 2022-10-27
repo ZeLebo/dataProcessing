@@ -108,9 +108,7 @@ final class Founder {
     public Founder(final Company company) {
         this.workers = new ArrayList<>(company.getDepartmentsCount());
         // the same as golang sync.WaitGroup
-        barrier = new CyclicBarrier(company.getDepartmentsCount(), () -> {
-            company.showCollaborativeResult();
-        });
+        barrier = new CyclicBarrier(company.getDepartmentsCount(), company::showCollaborativeResult);
         IntStream.range(0, company.getDepartmentsCount()).forEach(index -> workers.add(new Worker(company.getFreeDepartment(index), barrier)));
 
     }
@@ -123,8 +121,8 @@ final class Founder {
 }
 
 class Worker implements Runnable {
-    private Department department;
-    private CyclicBarrier barrier;
+    private final Department department;
+    private final CyclicBarrier barrier;
 
     public Worker(Department department, CyclicBarrier barrier) {
         this.department = department;

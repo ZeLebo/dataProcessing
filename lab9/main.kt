@@ -106,6 +106,7 @@ class Philosopher(name: String, val left: Fork, val right: Fork): Thread(name) {
         }
     }
     override fun run() {
+        // actually here's need to be something vulnerable to deadlock
         this.runWihoutDeadlock()
 //        this.runDeadlock()
     }
