@@ -1,65 +1,48 @@
 package redirect
 
-import com.sun.security.ntlm.Server
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
-import java.net.Socket
+import java.net.ServerSocket
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
+/*
+* Simple HTTP server that redirects all requests to a given URL.
+* Using threads to handle multiple requests.
+* Before start make sure that something is listening on the port.
+* */
 fun main(args: Array<String>) {
-    if (args.size < 2) {
-        println("Input: <port> <ip> <ip_port>")
-        return
-    }
-    val port = if (args.isNotEmpty()) args[0].toInt() else 8080
-    val ip = args[1]
-    val ipPort = if (args.size > 2) args[2].toInt() else 8000
-    // get all the connections on port and redirect them to ip:ipPort
-    // every connection is handled in a separate thread
-    Server(port, ip, ipPort).start()
-}
+    val port = if (args.isNotEmpty()) args[0].toInt() else 9090
+    val ip = if (args.size > 1) args[1] else "localhost"
+    val ipPort = if (args.size > 2) args[2].toInt() else 80
 
-class Server(private val port: Int, private val ip: String, private val ipPort: Int) : Thread() {
-    override fun run() {
-        val serverSocket = java.net.ServerSocket(port)
+    ServerSocket(port).use { server ->
         while (true) {
-            val socket = serverSocket.accept()
-            Thread(Redirect(socket, ip, ipPort)).start()
-        }
-    }
-
-    class Redirect(private val socket: Socket, private val ip: String, private val ipPort: Int) : Runnable {
-        override fun run() {
-            try {
-                val out = PrintWriter(socket.getOutputStream(), true)
-                val `in` = BufferedReader(InputStreamReader(socket.getInputStream()))
-                val socket2 = Socket(ip, ipPort)
-                val out2 = PrintWriter(socket2.getOutputStream(), true)
-                val in2 = BufferedReader(InputStreamReader(socket2.getInputStream()))
-                Thread(Redirect2(socket, in2, out2)).start()
-                var inputLine: String?
-                while (`in`.readLine().also { inputLine = it } != null) {
-                    out2.println(inputLine)
+            val socket = server.accept()
+            Thread {
+                try {
+                    val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
+                    val writer = PrintWriter(socket.getOutputStream())
+                    val request = reader.readLine()
+                    val uri = request.split(" ")[1]
+                    val response = HttpClient.newHttpClient().send(HttpRequest.newBuilder()
+                        .uri(URI.create("http://$ip:$ipPort$uri")).build(),
+                            HttpResponse.BodyHandlers.ofString())
+                    writer.println("HTTP/1.1 200 OK")
+                    writer.println("Content-Type: text/html")
+                    writer.println("Content-Length: ${response.body().length}")
+                    writer.println()
+                    writer.println(response.body())
+                    writer.flush()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    socket.close()
                 }
-                socket2.close()
-                socket.close()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    class Redirect2(private val socket: Socket, private val `in`: BufferedReader, private val out: PrintWriter) : Runnable {
-        override fun run() {
-            try {
-                var inputLine: String?
-                while (`in`.readLine().also { inputLine = it } != null) {
-                    out.println(inputLine)
-                }
-                socket.close()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            }.start()
         }
     }
 }
