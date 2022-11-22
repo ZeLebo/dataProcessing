@@ -17,7 +17,6 @@ fun main() {
 }
 
 class Fork(val id: Int) {
-
     private val semaphore = Semaphore(1)
     fun take() {
         semaphore.acquire()
