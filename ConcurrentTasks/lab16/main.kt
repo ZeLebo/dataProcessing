@@ -6,8 +6,7 @@ import java.net.Socket
 import java.net.URL
 import java.util.concurrent.LinkedBlockingQueue
 fun main(args: Array<String>) {
-    val address = if (args.isNotEmpty()) args[0] else "https://en.wikipedia.org/wiki/Spider"
-    val url = URL(address)
+    val url = if (args.isNotEmpty()) URL(args[0]) else URL("https://en.wikipedia.org/wiki/Spider")
     val responseLines = LinkedBlockingQueue<String>()
 
     Thread {
@@ -19,12 +18,11 @@ fun main(args: Array<String>) {
 
         // start to read the response
         val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
-        reader.lines().forEach {
-            responseLines.add(it) }
+        reader.lines().forEach { responseLines.add(it) }
     }.start()
 
     while (true) {
-        for (i in 0 until 200) {
+        for (i in 0 until 1) {
             val line = responseLines.take() ?: return
             if (line.isEmpty()) { return }
             println(line)
