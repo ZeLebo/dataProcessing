@@ -9,11 +9,6 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-/*
-* Simple HTTP server that redirects all requests to a given URL.
-* Using threads to handle multiple requests.
-* Before start make sure that something is listening on the port.
-* */
 fun main(args: Array<String>) {
     val port = if (args.isNotEmpty()) args[0].toInt() else 9090
     val ip = if (args.size > 1) args[1] else "localhost"
