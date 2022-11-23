@@ -16,45 +16,54 @@ fun main(args: Array<String>) {
     val selector = Selector.open()
     val serverSocketChanel = ServerSocketChannel.open()
     serverSocketChanel.bind(InetSocketAddress("localhost", port))
-    serverSocketChanel.configureBlocking(false)
-    serverSocketChanel.register(selector, SelectionKey.OP_ACCEPT)
+        .configureBlocking(false)
+        .register(selector, SelectionKey.OP_ACCEPT)
 
     while (true) {
         selector.select()
-        val selectedKeys = selector.selectedKeys()
-        val iterator = selectedKeys.iterator()
+        val keys = selector.selectedKeys()
+        val iterator = keys.iterator()
         while (iterator.hasNext()) {
             val key = iterator.next()
             if (key.isAcceptable) {
-                val conn = serverSocketChanel.accept()
-                conn.configureBlocking(false)
-                conn.register(selector, SelectionKey.OP_READ)
-                println("Go new connection from ${conn.remoteAddress}")
+                val server = key.channel() as ServerSocketChannel
+                val client = server.accept()
+                client.configureBlocking(false)
+                client.register(selector, SelectionKey.OP_READ)
+                println("Accepted connection from ${client.socket().remoteSocketAddress}")
             }
             if (key.isReadable) {
-                val buffer = ByteBuffer.allocate(1024)
                 val client = key.channel() as SocketChannel
-                try{
-                    val n = client.read(buffer)
-                    if (n < 0) {
-                        client.close()
-                    } else {
-                        buffer.flip()
-                        val data = ByteArray(buffer.limit())
-                        buffer.get(data)
-                        println(String(data))
-                        // write the response to the client
-                        client.write(ByteBuffer.wrap("HTTP/1.1 200 OK\r\n\r\n".toByteArray()))
-                        client.write(ByteBuffer.wrap("Hello World".toByteArray()))
-                        client.close()
-                    }
-                } catch (ignored:Exception){
-                    client.write(ByteBuffer.wrap("HTTP/1.1 500 Internal Server Error\r\n\r\n".toByteArray()))
+                val buffer = ByteBuffer.allocate(1024)
+                val read = client.read(buffer)
+                if (read == -1) {
                     client.close()
+                } else {
+                    buffer.flip()
+
+                    val redirectSocketChannel = SocketChannel.open()
+                    try {
+                        redirectSocketChannel.connect(InetSocketAddress(ip, ipPort))
+                    } catch (e: Exception) {
+                        client.write(ByteBuffer.wrap("HTTP/1.1 502 Bad Gateway\r\n\r\n".toByteArray()))
+                        client.write(ByteBuffer.wrap("Cannot connect to the server".toByteArray()))
+                        client.close()
+                        return
+                    }
+                    redirectSocketChannel.write(buffer)
+
+                    val response = ByteBuffer.allocate(1024)
+                    val tmp = redirectSocketChannel.read(response)
+
+                    if (tmp == -1) {
+                        redirectSocketChannel.close()
+                    } else {
+                        response.flip()
+                        client.write(response)
+                    }
                 }
             }
             iterator.remove()
         }
-        println("iteration")
     }
 }
