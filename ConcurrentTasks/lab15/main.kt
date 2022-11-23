@@ -1,6 +1,5 @@
 package selectserver
 
-
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
@@ -12,6 +11,8 @@ fun main(args: Array<String>) {
     val port = if (args.isNotEmpty()) args[0].toInt() else 9090
     val ip = if (args.size > 1) args[1] else "localhost"
     val ipPort = if (args.size > 2) args[2].toInt() else 80
+
+    println("Starting server on localhost:$port, redirecting to $ip:$ipPort")
 
     val selector = Selector.open()
     val serverSocketChanel = ServerSocketChannel.open()
