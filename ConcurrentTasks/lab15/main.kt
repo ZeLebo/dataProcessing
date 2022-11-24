@@ -52,7 +52,7 @@ fun main(args: Array<String>) {
                     server.attach(clientKey)
                     clientKey.attach(server)
                 } catch (e: Exception) {
-//                    println("Error connecting to server: ${e.message}")
+                    println("Error connecting to server: ${e.message}")
                     client.close()
                 }
             }
