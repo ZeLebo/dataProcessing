@@ -15,56 +15,68 @@ fun main(args: Array<String>) {
     println("Starting server on localhost:$port, redirecting to $ip:$ipPort")
 
     val selector = Selector.open()
-    val serverSocketChanel = ServerSocketChannel.open()
-    serverSocketChanel.bind(InetSocketAddress("localhost", port))
-        .configureBlocking(false)
-        .register(selector, SelectionKey.OP_ACCEPT)
+    val clientChannel = ServerSocketChannel.open()
+
+    try {
+        clientChannel.bind(InetSocketAddress("localhost", port))
+            .configureBlocking(false)
+            .register(selector, SelectionKey.OP_ACCEPT)
+    } catch (e: Exception) {
+        println("Error starting server: ${e.message}")
+        return
+    }
 
     while (true) {
         selector.select()
-        val keys = selector.selectedKeys()
-        val iterator = keys.iterator()
-        while (iterator.hasNext()) {
-            val key = iterator.next()
+        val clientKeys = selector.selectedKeys()
+        val clientIterator = clientKeys.iterator()
+
+        while (clientIterator.hasNext()) {
+            val key = clientIterator.next()
+            clientIterator.remove()
+
             if (key.isAcceptable) {
-                val server = key.channel() as ServerSocketChannel
-                val client = server.accept()
+                val client = clientChannel.accept()
                 client.configureBlocking(false)
-                client.register(selector, SelectionKey.OP_READ)
-                println("Accepted connection from ${client.socket().remoteSocketAddress}")
-            }
-            if (key.isReadable) {
-                val client = key.channel() as SocketChannel
-                val buffer = ByteBuffer.allocate(1024)
-                val read = client.read(buffer)
-                if (read == -1) {
+                val clientKey = client.register(selector, SelectionKey.OP_READ)
+
+                println("Client connected: ${client.remoteAddress}")
+                println("Client request URL: ${clientKey.attachment()}")
+
+                try {
+                    val server = SocketChannel.open(InetSocketAddress(ip, ipPort))
+                        .configureBlocking(false)
+                        .register(selector, SelectionKey.OP_READ)
+
+                    // store the server channel in the client channel and wise versa
+                    server.attach(clientKey)
+                    clientKey.attach(server)
+                } catch (e: Exception) {
+//                    println("Error connecting to server: ${e.message}")
                     client.close()
-                } else {
-                    buffer.flip()
-
-                    val redirectSocketChannel = SocketChannel.open()
-                    try {
-                        redirectSocketChannel.connect(InetSocketAddress(ip, ipPort))
-                    } catch (e: Exception) {
-                        client.write(ByteBuffer.wrap("HTTP/1.1 502 Bad Gateway\r\n\r\n".toByteArray()))
-                        client.write(ByteBuffer.wrap("Cannot connect to the server".toByteArray()))
-                        client.close()
-                        return
-                    }
-                    redirectSocketChannel.write(buffer)
-
-                    val response = ByteBuffer.allocate(1024)
-                    val tmp = redirectSocketChannel.read(response)
-
-                    if (tmp == -1) {
-                        redirectSocketChannel.close()
-                    } else {
-                        response.flip()
-                        client.write(response)
-                    }
                 }
             }
-            iterator.remove()
+            if (key.isReadable) {
+                val buffer = ByteBuffer.allocate(1024)
+                val client = key.channel() as SocketChannel
+                // We have a pair: client <-> server
+                val server = ((key.attachment() as SelectionKey).channel() as SocketChannel)
+
+                try {
+                    if (!client.isOpen || !server.isOpen) {
+                       throw Exception("Channel is closed")
+                    }
+                    if (client.read(buffer) == -1) {
+                        throw Exception("Client closed connection")
+                    }
+                    buffer.flip()
+                    server.write(buffer)
+                } catch (e: Exception) {
+                    println("Error writing to server: ${e.message}")
+                    client.close()
+                    server.close()
+                }
+            }
         }
     }
 }
