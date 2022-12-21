@@ -1,6 +1,6 @@
 (ns lab2-test
-  (:require [clojure.test :refer :all]
-    (:use lab2)))
+  (:require [clojure.test :refer :all])
+  (:use lab2_alt))
 
 (deftest test-prime
   (is (= (nth primes 0) 2))

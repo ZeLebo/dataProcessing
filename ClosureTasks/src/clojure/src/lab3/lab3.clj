@@ -1,25 +1,28 @@
 (ns lab3)
 
-; implement a parallel variant of filter using futures. Each future must process a block of elements. The number of futures must be equal to the number of cores of the machine.
-; The function must return a lazy sequence of the elements that satisfy the predicate.
+; split the above function into two functions
+; the first function takes a collection and returns a lazy sequence of collections of size n
+; the second function takes a collection of collections and returns a lazy sequence of the elements that satisfy the predicate
 
-;(defn filter-parallel [pred coll]
-;  (let [cores (Runtime/getRuntime availableProcessors)
-;        size (count coll)
-;        block (quot size cores)
-;        futures (map (fn [i] (future (filter pred (subvec coll (* i block) (+ (* i block) block))))) (range cores))
-;        results (map deref futures)]
-;    (apply concat results)))
 
-(defn pfilter [pred coll]
+
+(defn chunks [n coll]
+  ; split coll into chunks of size n
+  (let [step (fn step [vs]
+               ; if the collection is empty return nil
+               ; otherwise return a lazy sequence of the first n elements and the rest of the collection
+               (if-let [s (seq vs)]
+                 (lazy-seq (cons (take n s) (step (drop n s))))
+                 (lazy-seq nil)))]
+    (step coll)))
+
+(defn parallel-filter [pred coll]
+  ; get the number of processors
   (let [n (. (Runtime/getRuntime) availableProcessors)
-        size (count coll)
-        block (quot size n)
-        futures (map (fn [i] (future (filter pred (subvec coll (* i block) (+ (* i block) block))))) (range n))
+        ; split coll into chunks of size n
+        ; apply the predicate to each element of each chunk
+        futures (map (fn [c] (future (filter pred c))) (chunks n coll))
+        ; wait for the futures to complete
         results (map deref futures)]
+    ; flatten the result
     (apply concat results)))
-
-; test the function
-(defn heavy-even? [n]
-  (Thread/sleep 100)
-  (even? n))
