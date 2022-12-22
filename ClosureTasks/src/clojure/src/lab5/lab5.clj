@@ -1,4 +1,6 @@
 (ns lab5)
+
+; the count for restarts
 (defn philosopher
   "A philosopher that eats and thinks
    id - a philosopher id
@@ -11,16 +13,22 @@
   (new Thread
        (fn []
          (loop []
+           ; the whole iteration is a single cycle and transaction is used to make it atomic
+           (println (str "Philosopher " id " is hungry"))
            (Thread/sleep think-time)
            (println (str "Philosopher " id " is thinking\n"))
            (dosync
+             ; increase failed transactions counter if transaction failed
+             ; try to take forks
             (alter left-fork :counter inc)
             (alter right-fork :counter inc))
+           (println (str "Philosopher " id " took forks"))
            (Thread/sleep eat-time)
            (println (str "Philosopher " id " is eating\n"))
            (dosync
             (alter left-fork :counter dec)
             (alter right-fork :counter dec))
+            (println (str "Philosopher " id " put forks"))
            (Thread/sleep think-time)
            (recur)))))
 
@@ -28,6 +36,7 @@
   "Creates a fork
    returns a ref to a fork"
   []
+  ; ref with a counter that shows how many philosophers are using the fork
   (ref {:counter 0}))
 
 (defn create-philosophers

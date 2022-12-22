@@ -80,6 +80,11 @@
         (send (consumer :worker) notify-msg ware (state :storage) amount))))
   state)                 ;worker itself is immutable, keeping configuration only
 
+(defn swap-vals! [atom f]
+  (let [old_val @atom]
+    (swap! atom f)
+    [old_val @atom]))
+
 (defn notify-msg
   "A message that can be sent to a factory worker to notify that the provided 'amount' of 'ware's are
    just put to the 'storage-atom'."
@@ -93,25 +98,53 @@
    ;;   with 'supply-msg'
    ;; - return new agent state with possibly modified ':buffer' in any case!
   [state ware storage-atom amount]
-  (let [bill (state :bill),
-        buffer (state :buffer),
-        needed  (min (- (bill ware) (buffer ware)) amount),
-        internal-buffer
-        (if (>= (bill ware) (buffer ware))
-          (try
-            (do
-              (swap! storage-atom #(- % needed))
-              (update buffer ware #(+ % needed)))
-            (catch IllegalStateException _ buffer))
-          buffer)]
-    (if (= bill internal-buffer)
-      (do
-        (Thread/sleep (state :duration))
-        (send ((state :target-storage) :worker) supply-msg (state :amount))
-        (assoc state :buffer (reduce-kv (fn [acc k _] (assoc acc k 0)) {} bill)))
-      (assoc state :buffer internal-buffer))))
+   (let [bill (state :bill)
+         ; buffer is a map with wares as keys and their amounts as values
+        buffer (state :buffer)
+         ; amount of wares to produce per cycle
+         needed_amount (min (- (bill ware) (buffer ware)) amount),
+         ; amount of wares to produce per cycle
+         ; swap the values in the buffer and the storage atom for the amount of wares needed
+         ; if the amount of wares needed is greater than the amount of wares in the storage atom
+         ; then the swap will fail and the exception will be caught
+         ; if the swap is successful then the amount of wares needed is returned
+         ; if the swap is not successful then the amount of wares in the storage atom is returned
+         ; buffer ware > 0 means that we have enough wares to produce
+         ; need to swap the values in the buffer and the storage atom
+        [a_old a_new] (swap-vals! storage-atom #(- % (min % needed_amount)))
+         ; amount of wares to produce per cycle
+        new_buffer (assoc buffer ware (+ (buffer ware) (- a_old a_new)))]
+      (if (= bill new_buffer)
+        (try
+          ; if it is successful then we have enough wares to produce
+          (Thread/sleep (state :duration))
+          (send ((state :target-storage) :worker)
+                supply-msg (state :amount))
+          ; remove the wares from the buffer
+          (assoc state :buffer (reduce-kv (fn [acc k _] (assoc acc k 0))
+                                          {} bill))
+          ; if it is not successful then we do not have enough wares to produce
+          (catch Exception e
+            ; if caught an exception then we do not have enough wares to produce
+            ; need to swap the values in the buffer and the storage atom back
+            (assoc state :buffer new_buffer))))
+      (assoc state :buffer new_buffer)))
+; not the right way
+;; got enough material
+;(do
+;  ; wait for work to be done
+;  (Thread/sleep (state :duration))
+;  ; notify the storage that we produced some wares
+;  (send ((state :target-storage) :worker)
+;        ; notify the storage that we produced some wares
+;        supply-msg (state :amount))
+;  ; remove the wares from the buffer
+;  (assoc state :buffer (reduce-kv (fn [acc k _] (assoc acc k 0))
+;                                  {} bill))
+;  )
+;; not enough material
+;(assoc state :buffer new_buffer))))
 
-;;;
 (def safe-storage (storage "Safe" 1))
 (def safe-factory (factory 1 3000 safe-storage "Metal" 3))
 (def cuckoo-clock-storage (storage "Cuckoo-clock" 1))

@@ -12,6 +12,7 @@
 
 (test-filter-parallel)
 
+
 (deftest test-filter-parallel-time
   (time (doall (take 100 (filter even? (iterate inc 0)))))
   (time (doall (take 100 (parallel-filter even? (iterate inc 0)))))

@@ -23,6 +23,8 @@
         ; apply the predicate to each element of each chunk
         futures (map (fn [c] (future (filter pred c))) (chunks n coll))
         ; wait for the futures to complete
+        ; in fact just trigger the evaluation of the futures
+        ; cause the futures are lazy, and if you ne pnesh ih, to rabotat oni ne budut
         results (map deref futures)]
     ; flatten the result
     (apply concat results)))
