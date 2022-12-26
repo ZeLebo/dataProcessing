@@ -1,0 +1,1 @@
+C:\Users\sarta\Proger\IDEA\dataProcessing\XML\build\classes\kotlin\main\FullName.class;C:\Users\sarta\Proger\IDEA\dataProcessing\XML\build\classes\kotlin\main\MainKt.class;C:\Users\sarta\Proger\IDEA\dataProcessing\XML\build\classes\kotlin\main\Person.class;C:\Users\sarta\Proger\IDEA\dataProcessing\XML\build\classes\kotlin\main\PersonHandler.class
