@@ -4,7 +4,7 @@ package X1
 class Merger(
     private val handler: PersonHandler
 ) {
-    private val inputPeople = mutableListOf<Person>()
+    val inputPeople = mutableListOf<Person>()
     var result = mutableListOf<Person>()
     private val table = HashMap<String?, Person>()
 
