@@ -1,56 +1,14 @@
+package X1
+
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
 import javax.xml.parsers.SAXParserFactory
 
-fun main() {
-    val factory = SAXParserFactory.newInstance()
-    val parser = factory.newSAXParser()
-    val handler = PersonHandler()
-    parser.parse("src/people.xml", handler)
-    val res = Merger(handler)
-    res.merge()
-    res.print()
-}
-
-class Merger(
-    private val handler: PersonHandler
-) {
-    private val result = mutableListOf<Person>()
-    fun merge() {
-        val people = handler.people
-        val merged = people.groupBy { it.name }
-            .map { (name, people) ->
-                Person(
-                    name = name,
-                )
-            }
-        result.addAll(merged)
-    }
-
-    fun print() {
-        result.forEach {
-            println("Name: ${it.name}")
-            println("Father: ${it.fatherId} ${it.father}")
-            println("Mother: ${it.motherId} ${it.mother}")
-
-            println("Husband: ${it.husbandId}")
-            println("Wife: ${it.wifeId}")
-
-            println("Spouse: ${it.spouceName} ${it.spouceIds}")
-
-            println("Children: ${it.childrenIds} ${it.childrenNames}")
-            println("Brothers: ${it.brothersIds} ${it.brotherNames}")
-            println("Sisters: ${it.sistersIds} ${it.sisterNames}")
-            println()
-        }
-    }
-}
-
 class PersonHandler : DefaultHandler() {
     val people = mutableListOf<Person>()
-    lateinit var currentPerson: Person
-    var personCount = 0
-    var data = StringBuilder()
+    private lateinit var currentPerson: Person
+    private var personCount = 0
+    private var data = StringBuilder()
 
     override fun endDocument() {
         println("Finished parsing, found $personCount count and ${people.size} people")
@@ -142,11 +100,15 @@ class PersonHandler : DefaultHandler() {
                 }
 
                 "daughter" -> {
+                    var id = attributes.getValue("id")
                     currentPerson.daughtersIds.add(attributes.getValue("id")!!.trim())
+                    currentPerson.childrenIds.add(id)
                 }
 
                 "son" -> {
+                    var id = attributes.getValue("id")
                     currentPerson.sonsIds.add(attributes.getValue("id")!!.trim())
+                    currentPerson.childrenIds.add(id)
                 }
             }
         }
@@ -197,50 +159,4 @@ class PersonHandler : DefaultHandler() {
         }
         data.clear()
     }
-}
-
-class Person(
-    var id: String? = null,
-    var name: String? = null,
-    var surname: String? = null,
-    var gender: Gender? = null,
-
-    var spouceName: MutableList<String> = mutableListOf(),
-    var spouceIds: MutableList<String> = mutableListOf(),
-
-    var siblingsNumber: Int? = null,
-    var siblingsIds: MutableList<String> = mutableListOf(),
-    var brothersIds: MutableList<String> = mutableListOf(),
-    var brotherNames: MutableList<String> = mutableListOf(),
-
-    var sistersIds: MutableList<String> = mutableListOf(),
-    var sisterNames: MutableList<String> = mutableListOf(),
-
-    var childrenNumber: Int? = null,
-    var childrenIds: MutableList<String> = mutableListOf(),
-    var childrenNames: MutableList<String> = mutableListOf(),
-    var sonsIds: MutableList<String> = mutableListOf(),
-    var daughtersIds: MutableList<String> = mutableListOf(),
-
-    var wifeId: String? = null,
-    var husbandId: String? = null,
-
-    var mother: String? = null,
-    var father: String? = null,
-    var motherId: String? = null,
-    var fatherId: String? = null,
-    var parentIds: MutableList<String> = mutableListOf(),
-) {
-    fun setFullName(newName: String?) {
-        if (newName == null) {
-            return
-        }
-        val t = newName.trim().replace("\\s+".toRegex(), " ").split(" ")
-        name = t[0]
-        surname = t[1]
-    }
-}
-
-enum class Gender {
-    F, M
 }
