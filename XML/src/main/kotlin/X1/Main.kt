@@ -13,21 +13,8 @@ fun main() {
     // at that point we have 299756 people (need to merge them)
     val merger = Merger(handler)
 
-    var i = 0
-    merger.inputPeople.forEach { it ->
-        if (it.siblingsIds.size != 0) {
-            it.siblingsIds.forEach { println(it) }
-            i++
-        }
-//        if (it.name != null && it.surname != null) {
-//            println(it.name + " " + it.surname)
-//            i++
-//        }
-    }
-    println(i)
-//    merger.mergeById()
-//    println(merger.result.size)
-//    merger.printAll()
+    merger.mergeById()
+    println(merger.result.size)
 }
 
 
