@@ -15,6 +15,7 @@ fun main() {
 
     merger.mergeById()
     println(merger.result.size)
+    merger.printAll()
 }
 
 
