@@ -2,16 +2,15 @@ package X1
 
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
-import javax.xml.parsers.SAXParserFactory
 
 class PersonHandler : DefaultHandler() {
-    val people = mutableListOf<Person>()
     private lateinit var currentPerson: Person
     private var personCount = 0
     private var data = StringBuilder()
+    lateinit var merger: Merger
 
     override fun endDocument() {
-        println("Finished parsing, found $personCount count and ${people.size} people")
+        println("Finished parsing, found $personCount count")
     }
 
     private fun getElementValue(attributes: Attributes): String? {
@@ -154,7 +153,7 @@ class PersonHandler : DefaultHandler() {
         }
         when (qName) {
             "person" -> {
-                people.add(currentPerson)
+                merger.addPerson(currentPerson)
             }
         }
         data.clear()

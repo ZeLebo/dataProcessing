@@ -1,13 +1,26 @@
 package X1
 
-@Suppress("unused")
-class Merger(private val handler: PersonHandler) {
-    private val inputPeople = mutableListOf<Person>()
+class Merger() {
+    private val peopleWithoutId = mutableListOf<Person>()
     var result = mutableListOf<Person>()
     private val table = HashMap<String?, Person>()
 
-    init {
-        inputPeople.addAll(handler.people)
+    // from parser we have instance of person
+    // need to add it to table, if we hadn't one
+    // or merge with the one we have
+    fun addPerson(person: Person) {
+        if (person.id != null) {
+            table[person.id] = person
+            mergeChildrenById(person)
+            mergeParentById(person)
+            mergeSpouseById(person)
+            mergeSiblingsById(person)
+        }
+        else {
+            // we need to store the data about them somehow
+            // or do we?
+            peopleWithoutId.add(person)
+        }
     }
 
     private fun mergeChildrenById(person: Person) {
@@ -81,7 +94,7 @@ class Merger(private val handler: PersonHandler) {
         }
     }
 
-    private fun mergeSiblinsById(person: Person) {
+    private fun mergeSiblingsById(person: Person) {
         // adding siblings and parent info about them
         for (siblingId in person.siblingsIds) {
             // add if not exist
@@ -220,33 +233,8 @@ class Merger(private val handler: PersonHandler) {
         }
     }
 
-    fun mergeById() {
-        for (person in inputPeople) {
-            if (person.id != null) {
-                if (table[person.id] == null) {
-                    table[person.id] = person
-                } else {
-                    person.gender = table[person.id]?.gender ?: person.gender
-//                    var fromTable = table[person.id]
-//                    if (fromTable != null) {
-//                        person.gender = fromTable.gender
-//                    }
-                }
-            }
-            mergeChildrenById(person)
-            mergeParentById(person)
-            mergeSiblinsById(person)
-            mergeSpouseById(person)
-        }
-
+    fun getResult() {
         result.addAll(table.values)
-    }
-
-    private fun mergeNames() {}
-
-    fun merge() {
-        mergeById()
-        mergeNames()
     }
 
     fun printAll() {
