@@ -27,17 +27,17 @@ class XmlWriter {
                 writer.writeAttribute("gender", it)
             }
 
-            person.wifeId?.let {
+            person.wife?.id?.let {
                 writer.writeAttribute("wife-id", it)
             }
-            person.husbandId?.let {
+            person.husband?.id?.let {
                 writer.writeAttribute("husband-id", it)
             }
 
-            person.fatherId?.let {
+            person.father?.id?.let {
                 writer.writeAttribute("father-id", it)
             }
-            person.motherId?.let {
+            person.mother?.id?.let {
                 writer.writeAttribute("mother-id", it)
             }
 
