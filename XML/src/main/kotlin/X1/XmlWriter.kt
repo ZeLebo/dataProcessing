@@ -48,6 +48,7 @@ class XmlWriter {
                     writer.writeAttribute("id", son.id)
                 }
                 writer.writeEndElement() // end sons element
+                writer.writeCharacters("\n ")
             }
             // if daughters set is not empty - write daughters
             if (person.daughters.isNotEmpty()) {
@@ -56,6 +57,7 @@ class XmlWriter {
                     writer.writeAttribute("id", daughter.id)
                 }
                 writer.writeEndElement() // end daughters element
+                writer.writeCharacters("\n ")
             }
 
             // if brothers set is not empty - write brothers
@@ -65,6 +67,7 @@ class XmlWriter {
                     writer.writeAttribute("id", brother.id)
                 }
                 writer.writeEndElement() // end brothers element
+                writer.writeCharacters("\n ")
             }
 
             // if sisters set is not empty - write sisters
@@ -74,9 +77,11 @@ class XmlWriter {
                     writer.writeAttribute("id", sister.id)
                 }
                 writer.writeEndElement() // end sisters element
+                writer.writeCharacters("\n ")
             }
 
             writer.writeEndElement() // end person element
+            writer.writeCharacters("\n ")
         }
 
         writer.writeEndDocument()
