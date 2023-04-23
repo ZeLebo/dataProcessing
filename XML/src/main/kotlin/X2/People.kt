@@ -2,13 +2,26 @@ package X2
 
 import java.util.stream.Stream
 import java.util.stream.Collectors
+import javax.xml.bind.annotation.*
 
-class People(
-    private val people: MutableSet<Person> = HashSet(),
-    private var peopleCount : Int = 0,
-    private var idToPerson: MutableMap<String, Person> = HashMap(),
-    private var nameToPerson: MutableMap<String, Person> = HashMap(),
-) {
+public var noName: Int = 0
+public var noSurname: Int = 0
+public var noGender: Int = 0
+
+
+@XmlRootElement(name = "people")
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "people-type")
+class People {
+    @XmlElement(name = "person")
+    private val people: MutableSet<Person> = HashSet()
+    @XmlTransient
+    private var peopleCount : Int = 0
+    @XmlTransient
+    private var idToPerson: MutableMap<String, Person> = HashMap()
+    @XmlTransient
+    private var nameToPerson: MutableMap<String, Person> = HashMap()
+
     fun getPeopleCount() = peopleCount
     fun setPeopleCount(cnt: Long) {
         peopleCount = cnt.toInt()
@@ -35,8 +48,8 @@ class People(
         if (person.id != null) {
             idToPerson[person.id!!] = person
         }
-        if (person.getFullName() != null) {
-            nameToPerson[person.name!!] = person
+        person.getFullName()?.let {
+            nameToPerson[it] = person
         }
     }
 
@@ -45,7 +58,7 @@ class People(
             idToPerson.remove(person.id)
         }
         if (person.getFullName() != null) {
-            nameToPerson.remove(person.name)
+            nameToPerson.remove(person.firstname)
         }
     }
 
@@ -54,9 +67,20 @@ class People(
         return this.people
     }
 
-    fun validatePeople(): Boolean {
-        var people = this.getPeople()
-//        return people.size == peopleCount && people.all { it.validate() }
-        return people.size == peopleCount && people.stream().allMatch(Person::validate)
+    fun filterPeopleNonNull() {
+        this.people.map { person ->
+            if (person.firstname == null) {
+                person.firstname = "noNAME"
+                noName++
+            }
+            if (person.surname == null) {
+                person.surname = "noSURNAME"
+                noSurname++
+            }
+            if (person.gender == null) {
+                person.gender = "noGENDER"
+                noGender++
+            }
+        }
     }
 }

@@ -14,6 +14,8 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    implementation("javax.xml.bind:jaxb-api:2.3.0")
+    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.2")
 }
 
 tasks.test {

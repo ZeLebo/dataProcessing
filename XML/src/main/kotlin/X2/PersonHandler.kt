@@ -206,7 +206,7 @@ class PersonHandler(
 
     private fun processFirstName(value: String) {
         if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
-            currentPerson.name = value
+            currentPerson.firstname = value
         }
     }
 

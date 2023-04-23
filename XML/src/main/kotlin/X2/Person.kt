@@ -1,57 +1,123 @@
 package X2
 
+import javax.xml.bind.annotation.XmlAccessType
+import javax.xml.bind.annotation.XmlAccessorType
+import javax.xml.bind.annotation.XmlAttribute
+import javax.xml.bind.annotation.XmlElement
+import javax.xml.bind.annotation.XmlElementWrapper
+import javax.xml.bind.annotation.XmlID
+import javax.xml.bind.annotation.XmlIDREF
+import javax.xml.bind.annotation.XmlTransient
+import javax.xml.bind.annotation.XmlType
+
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "person-type", propOrder = [
+    "firstname", "surname", "gender",
+    "husband", "wife",
+    "father", "mother",
+    "sons", "daughters",
+    "brothers", "sisters",
+])
 class Person {
     // person info
+    @XmlID
+    @XmlAttribute
     var id: String? = null
-    var name: String? = null
+    @XmlElement(name = "firstname", required = true)
+    var firstname: String? = null
+    @XmlElement(name = "surname",  required = true)
     var surname: String? = null
+    @XmlElement(required = true)
     var gender: String? = null
 
     // wife/husband info
+    // ignore the field in xml
+    @XmlTransient
     var spouseName: String? = null
+    @XmlTransient
     var spouseId: String? = null
 
+    @XmlTransient
     var wifeId: String? = null
+    @XmlTransient
     var wifeName: String? = null
+    @XmlIDREF
     var wife: Person? = null
 
+    @XmlTransient
     var husbandId: String? = null
+    @XmlTransient
     var husbandName: String? = null
+    @XmlIDREF
     var husband: Person? = null
 
     // parents info
+    @XmlIDREF
     var mother: Person? = null
+    @XmlIDREF
     var father: Person? = null
 
+    @XmlTransient
     var motherId: String? = null
+    @XmlTransient
     var motherName: String? = null
+    @XmlTransient
     var fatherId: String? = null
+    @XmlTransient
     var fatherName: String? = null
+    @XmlTransient
     var parentIds: HashSet<String> = HashSet()
+    @XmlTransient
     var parentNames: HashSet<String> = HashSet()
 
     // children info
+    @XmlTransient
     var childrenNumber: Int? = null
+    @XmlTransient
     var childrenIds: HashSet<String> = HashSet()
+    @XmlTransient
     var childrenNames: HashSet<String> = HashSet()
 
+    @XmlTransient
     var sonsIds: HashSet<String> = HashSet()
+    @XmlTransient
     var sonsNames: HashSet<String> = HashSet()
+    @XmlIDREF
+    @XmlElementWrapper
+    @XmlElement(name = "son")
     var sons: HashSet<Person> = HashSet()
 
+    @XmlTransient
     var daughtersIds: HashSet<String> = HashSet()
+    @XmlTransient
     var daughtersNames: HashSet<String> = HashSet()
+    @XmlIDREF
+    @XmlElementWrapper
+    @XmlElement(name = "daughter")
     var daughters: HashSet<Person> = HashSet()
 
     // sibling info
+    @XmlTransient
     var siblingsNumber: Int? = null
+    @XmlTransient
     var siblingsIds: HashSet<String> = HashSet()
+    @XmlTransient
     var siblingsNames: HashSet<String> = HashSet()
+    @XmlTransient
     var brothersIds: HashSet<String> = HashSet()
+    @XmlTransient
     var brotherNames: HashSet<String> = HashSet()
+    @XmlIDREF
+    @XmlElementWrapper
+    @XmlElement(name = "brother")
     var brothers: HashSet<Person> = HashSet()
+    @XmlTransient
     var sistersIds: HashSet<String> = HashSet()
+    @XmlTransient
     var sisterNames: HashSet<String> = HashSet()
+    @XmlIDREF
+    @XmlElementWrapper
+    @XmlElement(name = "sister")
     var sisters: HashSet<Person> = HashSet()
 
     constructor() {
@@ -100,7 +166,7 @@ class Person {
         siblingsNumber: Long
     ) {
         this.id = id
-        this.name = firstName
+        this.firstname = firstName
         this.surname = lastName
         this.gender = gender
         this.spouseId = spouseId
@@ -125,13 +191,15 @@ class Person {
         if (newName == null) return
         val t = newName.trim().replace("\\s+".toRegex(), " ").split(" ")
         if (t[0].isEmpty() or t[1].isEmpty()) return
-        name = t[0]
+        firstname = t[0]
         surname = t[1]
     }
 
     fun getFullName(): String? {
-        if (name == null || surname == null) return null
-        return "$name $surname"
+        if (this.firstname != null && this.surname != null) {
+            return "$firstname $surname"
+        }
+        return null
     }
 
     fun hasParentId(id: String): Boolean {
@@ -344,7 +412,9 @@ class Person {
 
     fun validate(): Boolean {
         return (this.childrenNumber == null || (this.childrenNumber == this.sons.size + this.daughters.size) &&
-                (this.siblingsNumber == null || (this.siblingsNumber == this.brothers.size + this.sisters.size)))
+                (this.siblingsNumber == null || (this.siblingsNumber == this.brothers.size + this.sisters.size)) &&
+                this.id != null && this.firstname != null && this.surname != null && this.gender != null &&
+                        this.father != null && this.mother != null && (this.husband != null || this.wife != null))
     }
 
     // merging
@@ -355,8 +425,8 @@ class Person {
         if (this.getFullName() == null && person.getFullName() != null) {
             this.setFullName(person.getFullName())
         }
-        if (this.name == null && person.name != null) {
-            this.name = person.name
+        if (this.firstname == null && person.firstname != null) {
+            this.firstname = person.firstname
         }
         if (this.surname == null && person.surname != null) {
             this.surname = person.surname

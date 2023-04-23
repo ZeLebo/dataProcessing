@@ -6,7 +6,7 @@ fun main() {
     println(parser.people.getPeopleCount())
     println(parser.people.getPeople().size)
     val writer = XmlWriter()
-    writer.write(parser.people.getPeople())
+    writer.write(parser.people)
 }
 
 
