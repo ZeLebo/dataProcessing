@@ -29,28 +29,39 @@ class People {
     fun getPersonId(id: String) = idToPerson[id]
     fun getPersonName(name: String) = nameToPerson[name]
 
-    fun addPerson(person: Person) {
-        var byId: Person? = null
-        var byName: Person? = null
-        if (person.id != null && idToPerson[person.id] != null) {
-            byId = this.idToPerson[person.id]!!
-        }
-        if (person.getFullName() != null && nameToPerson[person.getFullName()] != null) {
-            byName = this.nameToPerson[person.getFullName()]!!
-        }
-        if (byName != null) {
-            person.merge(byName)
-        }
-        if (byId != null) {
-            person.merge(byId)
-        }
+//    fun addPerson(person: Person) {
+//        var byId: Person? = null
+//        var byName: Person? = null
+//        if (person.id != null && idToPerson[person.id] != null) {
+//            byId = this.idToPerson[person.id]!!
+//        }
+//        if (person.getFullName() != null && nameToPerson[person.getFullName()] != null) {
+//            byName = this.nameToPerson[person.getFullName()]!!
+//        }
+//        if (byName != null) {
+//            person.merge(byName)
+//        }
+//        if (byId != null) {
+//            person.merge(byId)
+//        }
+//
+//        if (person.id != null) {
+//            idToPerson[person.id!!] = person
+//        }
+//        if (person.getFullName() != null) {
+//            nameToPerson[person.getFullName()!!] = person
+//        }
+//    }
 
-        if (person.id != null) {
-            idToPerson[person.id!!] = person
-        }
-        person.getFullName()?.let {
-            nameToPerson[it] = person
-        }
+    fun addPerson(person: Person) {
+        val byId = if (person.id != null) idToPerson[person.id] else null
+        val byName = if (person.getFullName() != null) nameToPerson[person.getFullName()] else null
+
+        byId?.let { person.merge(it) }
+        byName?.let { person.merge(it) }
+
+        person.id?.let { idToPerson[it] = person }
+        person.getFullName()?.let { nameToPerson[it] = person }
     }
 
     fun removePerson(person: Person) {

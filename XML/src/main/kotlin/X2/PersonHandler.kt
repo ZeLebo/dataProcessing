@@ -2,6 +2,7 @@ package X2
 
 import java.io.FileInputStream
 import java.util.function.Consumer
+import java.util.Stack
 import java.util.stream.Stream
 import java.util.Objects
 import java.util.stream.Collectors
@@ -41,7 +42,7 @@ class PersonHandler(
     }
 
     private fun processAttributes(tag: String, iterator: Iterator<Attribute>, processor: Consumer<String>) {
-        this.tagContext.add(tag)
+        tagContext.add(tag)
         if (this.needNewOne) {
             this.currentPerson = Person()
         }
@@ -66,7 +67,6 @@ class PersonHandler(
     }
 
     private fun processStartElement(event: StartElement) {
-        // switch case for startelement.name.localpart
         when (event.name.localPart) {
             "people" -> processAttributes("people", event.attributes, this::processPeople)
 
@@ -77,7 +77,7 @@ class PersonHandler(
             "surname", "family", "family-name" -> processAttributes("surname", event.attributes, this::processLastName)
             "gender" -> processAttributes("gender", event.attributes, this::processGender)
 
-            "spouce" -> processAttributes("spouce", event.attributes, this::processSpouse)
+            "spouce" -> processAttributes("spouse", event.attributes, this::processSpouse)
             "husband" -> processAttributes("husband", event.attributes, this::processHusband)
             "wife" -> processAttributes("wife", event.attributes, this::processWife)
 
@@ -99,7 +99,7 @@ class PersonHandler(
 
     private fun processEndElement(event: EndElement) {
         if (event.name.localPart.equals("person")) {
-            if (currentPerson != null) {
+            if (!this.needNewOne) {
                 this.people.addPerson(currentPerson)
             }
             this.needNewOne = true
@@ -108,36 +108,38 @@ class PersonHandler(
     }
 
     private fun processCharacters(characters: Characters) {
-        if (!this.tagContext.isEmpty()) {
-            // peek in tag context
-            when (this.tagContext.first()) {
-                "people" -> processData(characters.data.trim().replace(" +", ""), this::processPeople)
-                "person" -> processData(characters.data.trim().replace(" +", ""), this::processPerson)
-                "id" -> processData(characters.data.trim().replace(" +", ""), this::processId)
-                "name" -> processData(characters.data.trim().replace(" +", ""), this::processName)
-                "firstname" -> processData(characters.data.trim().replace(" +", ""), this::processFirstName)
-                "surname" -> processData(characters.data.trim().replace(" +", ""), this::processLastName)
-                "gender" -> processData(characters.data.trim().replace(" +", ""), this::processGender)
-                "spouce" -> processData(characters.data.trim().replace(" +", ""), this::processSpouse)
-                "husband" -> processData(characters.data.trim().replace(" +", ""), this::processHusband)
-                "wife" -> processData(characters.data.trim().replace(" +", ""), this::processWife)
-                "parents" -> processData(characters.data.trim().replace(" +", ""), this::processParent)
-                "father" -> processData(characters.data.trim().replace(" +", ""), this::processFather)
-                "mother" -> processData(characters.data.trim().replace(" +", ""), this::processMother)
-                "children-number" -> processData(characters.data.trim().replace(" +", ""), this::processChildrenNumber)
-                "children" -> processData(characters.data.trim().replace(" +", ""), this::processChild)
-                "son" -> processData(characters.data.trim().replace(" +", ""), this::processSon)
-                "daughter" -> processData(characters.data.trim().replace(" +", ""), this::processDaughter)
-                "siblings-number" -> processData(characters.data.trim().replace(" +", ""), this::processSiblingsNumber)
-                "siblings" -> processData(characters.data.trim().replace(" +", ""), this::processSiblings)
-                "brother" -> processData(characters.data.trim().replace(" +", ""), this::processBrother)
-                "sister" -> processData(characters.data.trim().replace(" +", ""), this::processSister)
+        if (tagContext.isNotEmpty()) {
+            val data = characters.data.trim().replace(Regex(" +"), " ")
+            val callback = when (tagContext.first()) {
+                "people" -> ::processPeople
+                "person" -> ::processPerson
+                "id" -> ::processId
+                "name" -> ::processName
+                "firstName" -> ::processFirstName
+                "surName" -> ::processLastName
+                "gender" -> ::processGender
+                "spouse" -> ::processSpouse
+                "husband" -> ::processHusband
+                "wife" -> ::processWife
+                "parents" -> ::processParent
+                "father" -> ::processFather
+                "mother" -> ::processMother
+                "children-number" -> ::processChildrenNumber
+                "children" -> ::processChild
+                "son" -> ::processSon
+                "daughter" -> ::processDaughter
+                "siblings-number" -> ::processSiblingsNumber
+                "siblings" -> ::processSiblings
+                "brother" -> ::processBrother
+                "sister" -> ::processSister
+                else -> return
             }
+            processData(data, callback)
         }
     }
 
     private fun normalizePeople() {
-        for (person in people.getPeople()) {
+        people.getPeople().map {person ->
             normalizeSpouse(person)
             normalizeHusband(person)
             normalizeWife(person)
@@ -153,7 +155,7 @@ class PersonHandler(
         }
     }
     private fun linkPeople() {
-        for (person in people.getPeople()) {
+        people.getPeople().map {person ->
             linkHusband(person)
             linkWife(person)
             linkFather(person)
@@ -186,10 +188,10 @@ class PersonHandler(
     private fun processPerson(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.id = value
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.setFullName(value)
         }
-        needNewOne  = false
+        needNewOne = false
     }
 
     private fun processId(value: String) {
@@ -199,19 +201,19 @@ class PersonHandler(
     }
 
     private fun processName(value: String) {
-        if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.setFullName(value)
         }
     }
 
     private fun processFirstName(value: String) {
-        if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.firstname = value
         }
     }
 
     private fun processLastName(value: String) {
-        if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.surname = value
         }
     }
@@ -226,7 +228,7 @@ class PersonHandler(
     private fun processSpouse(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.spouseId = value
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.spouseName = value
         }
     }
@@ -234,7 +236,7 @@ class PersonHandler(
     private fun processHusband(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.husbandId = value
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.husbandName = value
         }
     }
@@ -242,7 +244,7 @@ class PersonHandler(
     private fun processWife(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.wifeId = value
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.wifeName = value
         }
     }
@@ -250,7 +252,7 @@ class PersonHandler(
     private fun processParent(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.addParentId(value)
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.addParentName(value)
         }
     }
@@ -258,7 +260,7 @@ class PersonHandler(
     private fun processFather(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.fatherId = value
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.fatherName = value
         }
     }
@@ -266,14 +268,15 @@ class PersonHandler(
     private fun processMother(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.motherId = value
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.motherName = value
         }
     }
+
     private fun processChild(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.addChildId(value)
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.addChildName(value)
         }
     }
@@ -281,7 +284,7 @@ class PersonHandler(
     private fun processSon(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.addSonId(value)
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.addSonName(value)
         }
     }
@@ -289,7 +292,7 @@ class PersonHandler(
     private fun processDaughter(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.addDaughterId(value)
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.addDaughterName(value)
         }
     }
@@ -297,7 +300,7 @@ class PersonHandler(
     private fun processSiblings(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.addSiblingId(value)
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.addSiblingName(value)
         }
     }
@@ -305,7 +308,7 @@ class PersonHandler(
     private fun processBrother(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.addBrotherId(value)
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.addBrotherName(value)
         }
     }
@@ -313,7 +316,7 @@ class PersonHandler(
     private fun processSister(value: String) {
         if (value.matches("P\\d+".toRegex())) {
             currentPerson.addSisterId(value)
-        } else if (!value.equals("NONE") && !value.equals("UNKNOWN")) {
+        } else if (value != "NONE" && value != "UNKNOWN") {
             currentPerson.addSisterName(value)
         }
     }
@@ -322,8 +325,8 @@ class PersonHandler(
     private fun linkHusband(person: Person) {
         val husband = person.husbandId?.let { this.people.getPersonId(it) }
             ?: person.husbandName?.let { this.people.getPersonName(it) }
-        if (husband != null) {
-            person.husband = husband
+        husband?.let {
+            person.husband = it
             person.husbandId = null
             person.husbandName = null
         }
@@ -332,8 +335,8 @@ class PersonHandler(
     private fun linkWife(person: Person) {
         val wife = person.wifeId?.let { this.people.getPersonId(it) }
             ?: person.wifeName?.let { this.people.getPersonName(it) }
-        if (wife != null) {
-            person.wife = wife
+        wife?.let {
+            person.wife = it
             person.wifeId = null
             person.wifeName = null
         }
@@ -342,8 +345,8 @@ class PersonHandler(
     private fun linkFather(person: Person) {
         val father = person.fatherId?.let { this.people.getPersonId(it) }
             ?: person.fatherName?.let { this.people.getPersonName(it) }
-        if (father != null) {
-            person.father = father
+        father?.let {
+            person.father = it
             person.fatherId = null
             person.fatherName = null
         }
@@ -352,70 +355,66 @@ class PersonHandler(
     private fun linkMother(person: Person) {
         val mother = person.motherId?.let { this.people.getPersonId(it) }
             ?: person.motherName?.let { this.people.getPersonName(it) }
-        if (mother != null) {
-            person.mother = mother
+        mother?.let {
+            person.mother = it
             person.motherId = null
             person.motherName = null
         }
     }
 
     private fun linkSons(person: Person) {
-        for (son in Stream.concat(person.sonsIds.stream().map(this.people::getPersonId),  person.sonsNames.stream().map(this.people::getPersonName))
-            .filter(Objects::nonNull).collect(Collectors.toSet())) {
-            if (son != null) {
-                person.addSon(son)
-                if (son.id != null) {
-                    person.removeSonId(son.id!!)
+        Stream.concat(person.sonsIds.stream().map(people::getPersonId),  person.sonsNames.stream().map(people::getPersonName)).map {son ->
+           son?.let {
+                person.addSon(it)
+                if (it.id != null) {
+                     person.removeSonId(it.id!!)
                 }
-                if (son.getFullName() != null) {
-                    person.removeSonName(son.getFullName()!!)
+                if (it.getFullName() != null) {
+                     person.removeSonName(it.getFullName()!!)
                 }
-            }
+           }
         }
     }
 
     private fun linkDaughters(person: Person) {
-        for (daughter in Stream.concat(person.daughtersIds.stream().map(this.people::getPersonId),  person.daughtersNames.stream().map(this.people::getPersonName))
-            .filter(Objects::nonNull).collect(Collectors.toSet())) {
-            if (daughter != null) {
-                person.addDaughter(daughter)
-                if (daughter.id != null) {
-                    person.removeDaughterId(daughter.id!!)
+        Stream.concat(person.daughtersIds.stream().map(this.people::getPersonId),  person.daughtersNames.stream().map(this.people::getPersonName)).map {daughter ->
+           daughter?.let {
+                person.addDaughter(it)
+                if (it.id != null) {
+                     person.removeDaughterId(it.id!!)
                 }
-                if (daughter.getFullName() != null) {
-                    person.removeDaughterName(daughter.getFullName()!!)
+                if (it.getFullName() != null) {
+                     person.removeDaughterName(it.getFullName()!!)
                 }
-            }
+           }
         }
     }
 
     private fun linkBrothers(person: Person) {
-        for (brother in Stream.concat(person.brothersIds.stream().map(this.people::getPersonId),  person.brotherNames.stream().map(this.people::getPersonName))
-            .filter(Objects::nonNull).collect(Collectors.toSet())) {
-            if (brother != null) {
-                person.addBrother(brother)
-                if (brother.id != null) {
-                    person.removeBrotherId(brother.id!!)
+        Stream.concat(person.brothersIds.stream().map(this.people::getPersonId),  person.brotherNames.stream().map(this.people::getPersonName)).map {brother ->
+           brother?.let {
+                person.addBrother(it)
+                if (it.id != null) {
+                     person.removeBrotherId(it.id!!)
                 }
-                if (brother.getFullName() != null) {
-                    person.removeBrotherName(brother.getFullName()!!)
+                if (it.getFullName() != null) {
+                     person.removeBrotherName(it.getFullName()!!)
                 }
-            }
+           }
         }
     }
 
     private fun linkSisters(person: Person) {
-        for (sister in Stream.concat(person.sistersIds.stream().map(this.people::getPersonId),  person.sisterNames.stream().map(this.people::getPersonName))
-            .filter(Objects::nonNull).collect(Collectors.toSet())) {
-            if (sister != null) {
-                person.addSister(sister)
-                if (sister.id != null) {
-                    person.removeSisterId(sister.id!!)
+        Stream.concat(person.sistersIds.stream().map(this.people::getPersonId),  person.sisterNames.stream().map(this.people::getPersonName)).map {sister ->
+           sister?.let {
+                person.addSister(it)
+                if (it.id != null) {
+                     person.removeSisterId(it.id!!)
                 }
-                if (sister.getFullName() != null) {
-                    person.removeSisterName(sister.getFullName()!!)
+                if (it.getFullName() != null) {
+                     person.removeSisterName(it.getFullName()!!)
                 }
-            }
+           }
         }
     }
 
