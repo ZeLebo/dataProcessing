@@ -183,12 +183,16 @@ class Person {
         this.siblingsNumber = siblingsNumber.toInt()
     }
 
-    fun setFullName(newName: String) {
-        val parts = newName.split(" ")
-        if (parts.size == 2 && parts.none { it.isEmpty()}) {
-            firstname = parts[0]
-            surname = parts[1]
-        }
+    fun getPersonId(): String? {
+        return id
+    }
+
+    fun setFullName(newName: String?) {
+        if (newName == null) return
+        val t = newName.trim().replace("\\s+".toRegex(), " ").split(" ")
+        if (t[0].isEmpty() or t[1].isEmpty()) return
+        firstname = t[0]
+        surname = t[1]
     }
 
     fun getFullName(): String? {
@@ -410,16 +414,16 @@ class Person {
         return (this.childrenNumber == null || (this.childrenNumber == this.sons.size + this.daughters.size) &&
                 (this.siblingsNumber == null || (this.siblingsNumber == this.brothers.size + this.sisters.size)) &&
                 this.id != null && this.firstname != null && this.surname != null && this.gender != null &&
-                        this.father != null && this.mother != null && (this.husband != null || this.wife != null))
+                this.father != null && this.mother != null && (this.husband != null || this.wife != null))
     }
 
     // merging
-    private fun mergeFields(person: Person) {
+    fun mergeFields(person: Person) {
         if (this.id == null && person.id != null) {
             this.id = person.id
         }
         if (this.getFullName() == null && person.getFullName() != null) {
-            this.setFullName(person.getFullName()!!)
+            this.setFullName(person.getFullName())
         }
         if (this.firstname == null && person.firstname != null) {
             this.firstname = person.firstname
