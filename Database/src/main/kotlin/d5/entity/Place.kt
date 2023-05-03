@@ -13,5 +13,7 @@ val flight: Flight,
 ) {
     val type : Type = Type.Economy
     var checked: Boolean = false
+    lateinit var checkedBy: String
+    var bought = false
     var available: Boolean = true
 }

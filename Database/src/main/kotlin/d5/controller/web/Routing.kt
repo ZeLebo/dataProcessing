@@ -5,25 +5,140 @@ import d5.service.Usercase
 import io.ktor.server.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.application.*
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import d5.dto.*
+import d5.entity.Flight
 
 fun Application.configureRouting() {
     val service = Usercase(Temp())
 
     routing {
         get("/api/v1/cities") {
-            @Serializable
-            data class City(val city: String)
             val result = service.getCities().map {
-                City(it)
+                CityTdo(it)
             }
             if (result.isEmpty()) {
                 call.respondText("No cities found")
             } else {
                 call.respond(Json.encodeToString(result))
             }
+        }
+        get("/api/v1/airports") {
+            val city = call.parameters["city"]
+            val result = mutableListOf<AirportTdo>()
+            val airports = if (city != null) service.getAirports(city) else service.getAirports()
+            airports.map { airport ->
+                val flights: MutableList<FlightDto> = mutableListOf()
+                airport.schedule.map {
+                    flights.add(FlightDto(it.id, it.airportSource.id, it.airportDest.id))
+                }
+                result.add(AirportTdo(airport.id, flights))
+            }
+            if (result.isEmpty()) {
+                call.respondText("No airports found")
+            } else {
+                call.respond(Json.encodeToString(result))
+            }
+        }
+        // inbound and outbound schedule for airports
+        get("/api/v1/airports/inbound") {
+            val airport = call.parameters["airport"]
+            if (airport == null) {
+                call.respondRedirect("/api/v1/airports")
+                return@get
+            }
+            val result: MutableList<FlightDto> = mutableListOf()
+            service.getInboundSchedule(airport).map { flight ->
+                result.add(FlightDto(flight.id, flight.airportSource.id, flight.airportDest.id))
+            }
+            if (result.isEmpty()) {
+                call.respondText("No flights for this airport")
+            } else {
+                call.respond(Json.encodeToString(result))
+            }
+        }
+        get("/api/v1/airports/outbound") {
+            val airport = call.parameters["airport"]
+            if (airport == null) {
+                call.respondRedirect("api/v1/airports")
+                return@get
+            }
+            val result: MutableList<FlightDto> = mutableListOf()
+            service.getOutboundSchedule(airport).map { flight ->
+                result.add(FlightDto(flight.id, flight.airportSource.id, flight.airportDest.id))
+            }
+            if (result.isEmpty()) {
+                call.respondText("No flights for this airport")
+            } else {
+                call.respond(Json.encodeToString(result))
+            }
+        }
+        get("api/v1/flights") {
+            val airportSource = call.parameters["airportSource"]
+            val airportDest = call.parameters["airportDest"]
+            val citySource = call.parameters["citySource"]
+            val cityDest = call.parameters["cityDest"]
+
+            val result: MutableList<FlightDto> = mutableListOf()
+            val fromDb: MutableSet<Flight> = mutableSetOf()
+            if (airportSource != null && airportDest != null) {
+                fromDb.addAll(service.getFlightsByAirports(airportSource, airportDest))
+            } else if (citySource != null && cityDest != null) {
+                fromDb.addAll(service.getFlightsByCities(citySource, cityDest))
+            } else if (airportSource != null && cityDest != null) {
+                fromDb.addAll(service.getFlightsByAirportAndCity(airportSource, cityDest))
+            } else if (citySource != null && airportDest != null) {
+                fromDb.addAll(service.getFlightsByCityAndAirport(citySource, airportDest))
+            }
+
+            fromDb.map { flight ->
+                result.add(FlightDto(flight.id, flight.airportSource.id, flight.airportDest.id))
+            }
+
+            if (result.isEmpty()) {
+                call.respondText("There's no flight according to this parameters")
+            } else {
+                call.respond(Json.encodeToString(result))
+            }
+        }
+        get("/api/v1/flights/booking") {
+            val flightId = call.parameters["flightId"]
+            val seatId = call.parameters["seat"]
+            val name = call.parameters["name"]
+
+            if (listOf(flightId, seatId, name).any { it.isNullOrEmpty() }) {
+                call.respondText("Parameters are not fully stated")
+                return@get
+            }
+
+            try {
+                service.bookTheFlight(flightId!!, seatId!!, name!!)
+            } catch (e: Exception) {
+                call.respond(400)
+                call.respond(e.toString())
+            } finally {
+                call.respond("You've booked the seat to the flight")
+            }
+        }
+        get("/api/v1/flights/checkout") {
+            val flightId = call.parameters["flightId"]
+            val seatId = call.parameters["seat"]
+            val name = call.parameters["name"]
+
+            if (listOf(flightId, seatId, name).any { it.isNullOrEmpty() }) {
+                call.respondText("Parameters are not fully stated")
+                return@get
+            }
+            try {
+                service.checkoutTheFlight(flightId!!, seatId!!, name!!)
+            } catch (e: Exception) {
+                call.respond(400)
+                call.respondText(e.toString())
+            } finally {
+                call.respond("You've checkout out to the seat on the flight")
+            }
+
         }
     }
 }

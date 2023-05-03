@@ -58,7 +58,7 @@ class Temp {
     }
 
     fun getFlightsByCities(source: String, dest: String): MutableSet<Flight> {
-        return flights.filter { it.airportDest.city == dest }.filter { it.airportSource.city == dest }.toMutableSet()
+        return flights.filter { it.airportDest.city == dest }.filter { it.airportSource.city == source }.toMutableSet()
     }
 
     fun getFlightsByAirportAndCity(source: String, dest: String): MutableSet<Flight> {

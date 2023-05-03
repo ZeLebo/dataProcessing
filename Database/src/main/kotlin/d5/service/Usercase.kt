@@ -15,16 +15,27 @@ class Usercase(
     fun getFlightsByAirportAndCity(source: String, dest: String) = database.getFlightsByAirportAndCity(source, dest)
     fun getFlightsByCityAndAirport(source: String, dest: String) = database.getFlightsByCityAndAirport(source, dest)
 
-    fun bookTheFlight(flightId: String, place: String): Boolean {
+    fun bookTheFlight(flightId: String, place: String, name: String) {
         //check existence of flight
         val flight = database.getFlightById(flightId) ?: throw Exception("No such flight")
         // check available places
-        if (flight.places.find {it.number == place} != null) {
-            TODO("went washing")
-
+        val seat = flight.places.find { it.number == place } ?: throw Exception("No such seat for flight")
+        if (!seat.available) {
+            throw Exception("Seat is not available")
         } else {
-            throw Exception("No such place")
+            seat.available = false
+            seat.checkedBy = name
         }
-        return true
+    }
+
+    fun checkoutTheFlight(flightId: String, place: String, name: String) {
+        val flight = database.getFlightById(flightId) ?: throw Exception("No such flight")
+        val seat = flight.places.find { it.number == place } ?: throw Exception("No such seat for flight")
+        if (!seat.bought && seat.checkedBy == name) {
+            // buying the seat
+            seat.bought = true
+        } else {
+            throw Exception("You can't buy this place")
+        }
     }
 }
