@@ -1,0 +1,422 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "D5 spec",
+    "contact": {},
+    "version": "1.0"
+  },
+  "components": {
+    "schemas": {
+      "City": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "format": "string",
+            "description": "the name of the city"
+          }
+        }
+      },
+
+      "FlightDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "string"
+          },
+          "airport": {
+            "type": "string",
+            "description": "source airport, ie from which we are flying"
+          },
+          "airportDest": {
+            "type": "string",
+            "description": "destination airport"
+          }
+        }
+      },
+
+      "AirportDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "FlightDto": {
+            "type": "object",
+            "items": [{
+              "$ref": "#/components/schemas/FlightDto"
+            }]
+          }
+        }
+      }
+
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api/v1",
+      "variables": {}
+    }
+  ],
+  "paths": {
+    "/cities": {
+      "get": {
+        "tags": [
+          "Development"
+        ],
+        "summary": "Get cities",
+        "operationId": "Get cities",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {},
+            "content": {
+              "application/json":{
+                "schema": {
+                  "$ref": "#/components/schemas/City"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/airports": {
+      "get": {
+        "tags": [
+          "Development"
+        ],
+        "summary": "Get airports",
+        "operationId": "Get airports",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The list of all available airports",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AirportDto"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/airports/inbound": {
+      "get": {
+        "tags": [
+          "Development"
+        ],
+        "summary": "Get schedule inbound",
+        "operationId": "Get schedule inbound",
+        "parameters": [
+          {
+            "name": "airport",
+            "in": "query",
+            "description": "the airport you wanna see the inbound schedule for",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "first-airport"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list of all airports",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlightDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "no flights have been found for this airport",
+            "content": {
+              "text/plain": {
+                "example": "No flights for this airport"
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/airports/outbound": {
+      "get": {
+        "tags": [
+          "Development"
+        ],
+        "summary": "Get schedule outbound",
+        "operationId": "Get schedule outbound",
+        "parameters": [
+          {
+            "name": "airport",
+            "in": "query",
+            "description": "the airport you wanna see the outbound schedule for",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "first-airport"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlightDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "no flights have been found for this airport",
+            "content": {
+              "text/plain": {
+                "example": "No flights for this airport"
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/flights": {
+      "get": {
+        "tags": [
+          "Development"
+        ],
+        "summary": "Get flights by destination",
+        "operationId": "Get flights by destination",
+        "parameters": [
+          {
+            "name": "citySource",
+            "in": "query",
+            "description": "the city from which user wants to flight",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "second-city"
+            }
+          },
+          {
+            "name": "cityDest",
+            "in": "query",
+            "description": "the city where user wants to flight",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "first-city"
+            }
+          },
+          {
+            "name": "airportSource",
+            "in": "query",
+            "description": "the airport from which user wants to flight",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "first-airport"
+            }
+          },
+          {
+            "name": "airportDest",
+            "in": "query",
+            "description": "the airport where user wants to flight",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "first-airport"
+            }
+          }],
+        "responses": {
+          "200": {
+            "description": "list of available flights",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlightDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No flights available according to these parameters",
+            "content": {
+              "text/plain": {
+                "example": "There's no flight according to these parameters"
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/flights/booking": {
+      "post": {
+        "tags": [
+          "Development"
+        ],
+        "summary": "Booking",
+        "operationId": "Booking",
+        "parameters": [
+          {
+            "name": "flightId",
+            "in": "query",
+            "description": "id of flight which is wanted to checkout",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "first-flight"
+            }
+          },
+          {
+            "name": "seat",
+            "in": "query",
+            "description": "id of the place",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "firstPlace"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "name of the user, who wants to book the place",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "ZhoRa"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "user successfully booked the place to flight",
+            "headers": {},
+            "content": {
+              "text/plain": {
+                "example": "you have booked to this flight"
+              }
+            }
+          },
+          "400": {
+            "description": "user cannot book this place",
+            "content": {
+              "text/plain": {
+                "example": "You cannot book to this flight"
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/flights/checkout": {
+      "post": {
+        "tags": [
+          "Development"
+        ],
+        "summary": "Checkout",
+        "operationId": "Checkout",
+        "parameters": [
+          {
+            "name": "flightId",
+            "in": "query",
+            "description": "id of the flight user want to checkout",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "first-flight"
+            }
+          },
+          {
+            "name": "seat",
+            "in": "query",
+            "description": "the id of place user want to checkout",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "firstPlace"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "name of person who books the place",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "ZhoRa"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successfully checkout",
+            "headers": {},
+            "content": {
+              "text/plain": {
+                "example": "You have checkout to this flight"
+              }
+            }
+          },
+          "400": {
+            "description": "user cannot checkout this place",
+            "content": {
+              "text/plain": {
+                "example": "You cannot checkout this flight"
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Development",
+      "description": "some undefined tag"
+    }
+  ]
+}

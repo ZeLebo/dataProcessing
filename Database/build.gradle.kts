@@ -15,11 +15,16 @@ repositories {
 }
 
 dependencies {
+    implementation("io.ktor:ktor-server-core-jvm:2.3.0")
+    implementation("io.ktor:ktor-server-swagger:2.3.0")
     testImplementation(kotlin("test"))
     implementation(kotlin("stdlib-jdk8"))
     implementation("io.ktor:ktor-server-core:2.3.0")
     implementation("io.ktor:ktor-server-netty:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+//    implementation("io.ktor:ktor-swagger-ui:1.6.3")
+//    implementation("io.ktor:ktor-openapi:1.6.3")
+    implementation("io.ktor:ktor-server-swagger:2.3.0")
 }
 
 tasks.test {

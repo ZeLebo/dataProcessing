@@ -9,6 +9,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import d5.dto.*
 import d5.entity.Flight
+import io.ktor.http.*
+import io.ktor.server.plugins.swagger.*
 
 fun Application.configureRouting() {
     val service = Usercase(Temp())
@@ -53,7 +55,7 @@ fun Application.configureRouting() {
                 result.add(FlightDto(flight.id, flight.airportSource.id, flight.airportDest.id))
             }
             if (result.isEmpty()) {
-                call.respondText("No flights for this airport")
+                call.respond(HttpStatusCode.BadGateway, "No flights for this airport")
             } else {
                 call.respond(Json.encodeToString(result))
             }
@@ -69,7 +71,7 @@ fun Application.configureRouting() {
                 result.add(FlightDto(flight.id, flight.airportSource.id, flight.airportDest.id))
             }
             if (result.isEmpty()) {
-                call.respondText("No flights for this airport")
+                call.respond(HttpStatusCode.BadRequest, "No flights for this airport")
             } else {
                 call.respond(Json.encodeToString(result))
             }
@@ -97,38 +99,37 @@ fun Application.configureRouting() {
             }
 
             if (result.isEmpty()) {
-                call.respondText("There's no flight according to this parameters")
+                call.respond(HttpStatusCode.BadRequest, "There's no flight according to these parameters")
             } else {
                 call.respond(Json.encodeToString(result))
             }
         }
-        get("/api/v1/flights/booking") {
+        post("/api/v1/flights/booking") {
             val flightId = call.parameters["flightId"]
             val seatId = call.parameters["seat"]
             val name = call.parameters["name"]
 
             if (listOf(flightId, seatId, name).any { it.isNullOrEmpty() }) {
-                call.respondText("Parameters are not fully stated")
-                return@get
+                call.respond(HttpStatusCode.BadRequest, "Parameters are not fully stated")
+                return@post
             }
 
             try {
                 service.bookTheFlight(flightId!!, seatId!!, name!!)
             } catch (e: Exception) {
-                call.respond(400)
-                call.respond(e.toString())
+                call.respond(HttpStatusCode.BadRequest, "You cannot book this place")
             } finally {
                 call.respond("You've booked the seat to the flight")
             }
         }
-        get("/api/v1/flights/checkout") {
+        post("/api/v1/flights/checkout") {
             val flightId = call.parameters["flightId"]
             val seatId = call.parameters["seat"]
             val name = call.parameters["name"]
 
             if (listOf(flightId, seatId, name).any { it.isNullOrEmpty() }) {
                 call.respondText("Parameters are not fully stated")
-                return@get
+                return@post
             }
             try {
                 service.checkoutTheFlight(flightId!!, seatId!!, name!!)
@@ -140,5 +141,6 @@ fun Application.configureRouting() {
             }
 
         }
+        swaggerUI(path = "openapi", swaggerFile = "openapi/documentation.json")
     }
 }
