@@ -4,6 +4,8 @@
 
 **/.DS_Store
 Task_2_4_1/repos/*
+**/*.sql
+**/database/
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
@@ -129,7 +131,6 @@ fabric.properties
 *.war
 *.nar
 *.ear
-*.zip
 *.tar.gz
 *.rar
 
