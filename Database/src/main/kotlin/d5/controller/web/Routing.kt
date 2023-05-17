@@ -1,6 +1,5 @@
 package d5.controller.web
 
-import d5.repository.Temp
 import d5.service.Usercase
 import io.ktor.server.routing.*
 import io.ktor.server.response.*
@@ -8,12 +7,13 @@ import io.ktor.server.application.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import d5.dto.*
-import d5.entity.Flight
+import d5.entity.Airport
+import d5.repository.Postgres
 import io.ktor.http.*
 import io.ktor.server.plugins.swagger.*
 
 fun Application.configureRouting() {
-    val service = Usercase(Temp())
+    val service = Usercase(Postgres())
 
     routing {
         get("/api/v1/cities") {
@@ -28,14 +28,11 @@ fun Application.configureRouting() {
         }
         get("/api/v1/airports") {
             val city = call.parameters["city"]
-            val result = mutableListOf<AirportTdo>()
-            val airports = if (city != null) service.getAirports(city) else service.getAirports()
-            airports.map { airport ->
-                val flights: MutableList<FlightDto> = mutableListOf()
-                airport.schedule.map {
-                    flights.add(FlightDto(it.id, it.airportSource.id, it.airportDest.id))
-                }
-                result.add(AirportTdo(airport.id, flights))
+            val result = mutableSetOf<Airport>()
+            if (city != null) {
+                result.addAll(service.getAirports(city))
+            } else {
+                result.addAll(service.getAirports())
             }
             if (result.isEmpty()) {
                 call.respondText("No airports found")
@@ -50,10 +47,7 @@ fun Application.configureRouting() {
                 call.respondRedirect("/api/v1/airports")
                 return@get
             }
-            val result: MutableList<FlightDto> = mutableListOf()
-            service.getInboundSchedule(airport).map { flight ->
-                result.add(FlightDto(flight.id, flight.airportSource.id, flight.airportDest.id))
-            }
+            val result = service.getInboundSchedule(airport)
             if (result.isEmpty()) {
                 call.respond(HttpStatusCode.BadGateway, "No flights for this airport")
             } else {
@@ -66,37 +60,29 @@ fun Application.configureRouting() {
                 call.respondRedirect("api/v1/airports")
                 return@get
             }
-            val result: MutableList<FlightDto> = mutableListOf()
-            service.getOutboundSchedule(airport).map { flight ->
-                result.add(FlightDto(flight.id, flight.airportSource.id, flight.airportDest.id))
-            }
+            val result = service.getOutboundSchedule(airport)
             if (result.isEmpty()) {
                 call.respond(HttpStatusCode.BadRequest, "No flights for this airport")
             } else {
                 call.respond(Json.encodeToString(result))
             }
         }
+
         get("api/v1/flights") {
             val airportSource = call.parameters["airportSource"]
             val airportDest = call.parameters["airportDest"]
-            val citySource = call.parameters["citySource"]
-            val cityDest = call.parameters["cityDest"]
+//            val citySource = call.parameters["citySource"]
+//            val cityDest = call.parameters["cityDest"]
+            val upperBound = call.parameters["bound"]
 
-            val result: MutableList<FlightDto> = mutableListOf()
-            val fromDb: MutableSet<Flight> = mutableSetOf()
-            if (airportSource != null && airportDest != null) {
-                fromDb.addAll(service.getFlightsByAirports(airportSource, airportDest))
-            } else if (citySource != null && cityDest != null) {
-                fromDb.addAll(service.getFlightsByCities(citySource, cityDest))
-            } else if (airportSource != null && cityDest != null) {
-                fromDb.addAll(service.getFlightsByAirportAndCity(airportSource, cityDest))
-            } else if (citySource != null && airportDest != null) {
-                fromDb.addAll(service.getFlightsByCityAndAirport(citySource, airportDest))
+            try {
+                upperBound?.toInt()
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Amount of peresadky cannot be not int")
+                return@get
             }
 
-            fromDb.map { flight ->
-                result.add(FlightDto(flight.id, flight.airportSource.id, flight.airportDest.id))
-            }
+            val result = service.getFlightsByAirport(airportSource!!, airportDest!!, upperBound?.toInt() ?: 1)
 
             if (result.isEmpty()) {
                 call.respond(HttpStatusCode.BadRequest, "There's no flight according to these parameters")
@@ -106,38 +92,48 @@ fun Application.configureRouting() {
         }
         post("/api/v1/flights/booking") {
             val flightId = call.parameters["flightId"]
-            val seatId = call.parameters["seat"]
+            val identification = call.parameters["identification"] ?: "123456789"
             val name = call.parameters["name"]
+            val fare_conditions = call.parameters["fare_conditions"] ?: "Economy"
 
-            if (listOf(flightId, seatId, name).any { it.isNullOrEmpty() }) {
+            if (listOf(flightId, identification, name, fare_conditions).any { it.isNullOrEmpty() }) {
                 call.respond(HttpStatusCode.BadRequest, "Parameters are not fully stated")
                 return@post
             }
 
+            if (fare_conditions !in listOf("Economy", "Business", "Comfort")) {
+                call.respond(HttpStatusCode.BadRequest, "Wrong fare conditions")
+                return@post
+            }
+
+            var res: ticket = ticket("", 0.0)
+
             try {
-                service.bookTheFlight(flightId!!, seatId!!, name!!)
+                res = service.bookTheFlight(name!!, identification, flightId!!.toInt(), fare_conditions)
             } catch (e: Exception) {
-                call.respond(HttpStatusCode.BadRequest, "You cannot book this place")
+                call.respond(HttpStatusCode.BadRequest, "You cannot book this place due to $e")
             } finally {
-                call.respond("You've booked the seat to the flight")
+                if (res.ticket_no.isNotEmpty()) {
+                    call.respond(Json.encodeToString(res))
+                } else {
+                    call.respond(HttpStatusCode(400, "No place for this flight left available"))
+                }
             }
         }
         post("/api/v1/flights/checkout") {
-            val flightId = call.parameters["flightId"]
-            val seatId = call.parameters["seat"]
-            val name = call.parameters["name"]
+            val ticket_no = call.parameters["ticket_no"]
+            var seat = Seat("",0)
 
-            if (listOf(flightId, seatId, name).any { it.isNullOrEmpty() }) {
-                call.respondText("Parameters are not fully stated")
+            if (ticket_no.isNullOrEmpty()) {
+                call.respondText("Specify the ticket_no")
                 return@post
             }
             try {
-                service.checkoutTheFlight(flightId!!, seatId!!, name!!)
+                seat = service.checkoutTheFlight(ticket_no)
             } catch (e: Exception) {
-                call.respond(400)
-                call.respondText(e.toString())
+                call.respond(HttpStatusCode.BadRequest, "You cannot checkout this place due to ${e.localizedMessage}")
             } finally {
-                call.respond("You've checkout out to the seat on the flight")
+                call.respond(Json.encodeToString(seat))
             }
 
         }

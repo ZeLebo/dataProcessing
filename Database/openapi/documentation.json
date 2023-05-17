@@ -210,7 +210,7 @@
             "name": "citySource",
             "in": "query",
             "description": "the city from which user wants to flight",
-            "required": true,
+            "required": false,
             "style": "form",
             "explode": true,
             "schema": {
@@ -222,7 +222,7 @@
             "name": "cityDest",
             "in": "query",
             "description": "the city where user wants to flight",
-            "required": true,
+            "required": false,
             "style": "form",
             "explode": true,
             "schema": {
@@ -234,7 +234,7 @@
             "name": "airportSource",
             "in": "query",
             "description": "the airport from which user wants to flight",
-            "required": true,
+            "required": false,
             "style": "form",
             "explode": true,
             "schema": {
@@ -246,12 +246,23 @@
             "name": "airportDest",
             "in": "query",
             "description": "the airport where user wants to flight",
-            "required": true,
+            "required": false,
             "style": "form",
             "explode": true,
             "schema": {
               "type": "string",
               "example": "first-airport"
+            }
+          },
+          {
+            "name" : "upperBound",
+            "in": "query",
+            "description": "amount of peresadky",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "example": "3"
             }
           }],
         "responses": {
