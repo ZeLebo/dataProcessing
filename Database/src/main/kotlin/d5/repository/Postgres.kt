@@ -228,7 +228,7 @@ class Postgres {
                 println(resSet.getString("book_ref"))
             }
         }
-        connection.commit()
+//        connection.commit()
 
         // adding new ticket to table bookings.tickets with booking_ref
         sqlRequest = """insert into bookings.tickets (ticket_no, book_ref, passenger_id, passenger_name, contact_data) values ('$ticket_no', '$booking_ref', '$identification', '$name', '{"email": "example.com", "phone": "+77777777777"}') returning *;"""

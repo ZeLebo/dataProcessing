@@ -21,7 +21,7 @@ fun Application.configureRouting() {
                 CityTdo(it)
             }
             if (result.isEmpty()) {
-                call.respondText("No cities found")
+                call.respond(HttpStatusCode.BadRequest, "No cities found")
             } else {
                 call.respond(Json.encodeToString(result))
             }
@@ -49,7 +49,7 @@ fun Application.configureRouting() {
             }
             val result = service.getInboundSchedule(airport)
             if (result.isEmpty()) {
-                call.respond(HttpStatusCode.BadGateway, "No flights for this airport")
+                call.respond(HttpStatusCode.BadRequest, "No flights for this airport")
             } else {
                 call.respond(Json.encodeToString(result))
             }
