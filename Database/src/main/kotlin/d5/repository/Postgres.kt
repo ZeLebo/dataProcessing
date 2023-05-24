@@ -130,9 +130,6 @@ class Postgres {
         return res
     }
 
-    fun getListFlightsByAirports(airport_code_departure: String, airport_code_arrival: String) {}
-    fun getListFlightsByCity(airport_code_departure: String, airport_code_arrival: String) {}
-
     /*
     * @name - name of user (first + surname)
     * @identification - passport number
@@ -166,6 +163,7 @@ class Postgres {
         var left_seats = 0
         // the following code is transaction
         connection.autoCommit = false
+
         // getting amount of free seats
         sqlRequest = "select count(*) -" +
                 "       (select count(*) from bookings.ticket_flights where fare_conditions = '${fare_conditions}' and flight_id = $flight_id) left_places " +
@@ -179,13 +177,14 @@ class Postgres {
             }
         }
 
+        println("left_seats = $left_seats")
+
         if (left_seats == 0) {
             // we don't have enough seats
             println("we don't have enough seats")
             connection.rollback()
             connection.autoCommit = true
             throw RuntimeException("we don't have enough seats")
-            return ticket("", 0.0)
         }
 
         // get the price for the place
@@ -214,7 +213,6 @@ class Postgres {
                     connection.rollback()
                     connection.autoCommit = true
                     throw RuntimeException("we have the same booking_ref")
-                    return ticket("", 0.0)
                 }
             }
         }
@@ -228,7 +226,6 @@ class Postgres {
                 println(resSet.getString("book_ref"))
             }
         }
-//        connection.commit()
 
         // adding new ticket to table bookings.tickets with booking_ref
         sqlRequest = """insert into bookings.tickets (ticket_no, book_ref, passenger_id, passenger_name, contact_data) values ('$ticket_no', '$booking_ref', '$identification', '$name', '{"email": "example.com", "phone": "+77777777777"}') returning *;"""
@@ -244,7 +241,6 @@ class Postgres {
             it.executeQuery(sqlRequest)
         }
 
-        println("left_seats = $left_seats")
 
         connection.commit()
         connection.autoCommit = true
