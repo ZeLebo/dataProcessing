@@ -9,6 +9,7 @@ import sun.security.ec.point.ProjectivePoint.Mutable
 class Usercase(
     private val database: Postgres
 ) {
+    fun addAirport(code: String) = database.addAirport(code)
     fun getCities() = database.getAllCities()
     fun getAirports() = database.getAllAirports()
     fun getAirports(city: String) = database.getAllAirports(city)

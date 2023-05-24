@@ -7,7 +7,6 @@ import d5.dto.ticket
 import java.sql.Connection
 import java.sql.DriverManager
 import d5.entity.Airport
-import d5.entity.FareConditions
 import d5.entity.Flight
 import java.util.*
 
@@ -27,6 +26,23 @@ class Postgres {
 
     fun disconnect(): Unit {
         this.connection.close()
+    }
+
+
+    fun addAirport(code: String) {
+        sqlRequest = "INSERT INTO bookings.airports (airport_code, airport_name, city, longitude, latitude, timezone) VALUES ('$code', 'name', '$code', 0, 0, 'Europe/Moscow')"
+        val statement = connection.createStatement()
+        statement.use {
+            it.executeUpdate(sqlRequest)
+        }
+    }
+
+    fun deleteAirport(code: String) {
+        sqlRequest = "DELETE FROM bookings.airports WHERE airport_code = '$code'"
+        val statement = connection.createStatement()
+        statement.use {
+            it.executeUpdate(sqlRequest)
+        }
     }
 
     fun getAllAirports(): MutableSet<Airport> {
@@ -146,10 +162,24 @@ class Postgres {
         // then add new row to table bookings.tickets using new booking_ref and data about user
         // then add new row to table bookings.ticket_flights using new ticket_no and flight_id
 
+        // check that flight exists
+        sqlRequest = "select count(*) from bookings.flights where flight_id = $flight_id"
+        var count = 0
+        var statement = connection.createStatement()
+        statement.use {
+            val resSet = it.executeQuery(sqlRequest)
+            while(resSet.next()) {
+                count = resSet.getInt(1)
+            }
+        }
+        if (count == 0) {
+            throw Exception("Flight with id $flight_id doesn't exist")
+        }
+
         // check that flight not in status Arrived
         sqlRequest = "select status from bookings.flights where flight_id = $flight_id"
         var status = ""
-        var  statement = connection.createStatement()
+        statement = connection.createStatement()
         statement.use {
             val resSet = it.executeQuery(sqlRequest)
             while(resSet.next()) {

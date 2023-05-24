@@ -25,6 +25,9 @@ dependencies {
 //    implementation("io.ktor:ktor-swagger-ui:1.6.3")
 //    implementation("io.ktor:ktor-openapi:1.6.3")
     implementation("io.ktor:ktor-server-swagger:2.3.0")
+    implementation("io.ktor:ktor-server-test-host:2.3.0")
+    // mockk
+    testImplementation("io.mockk:mockk:1.12.0")
     implementation("org.postgresql:postgresql:42.2.27")
 }
 
