@@ -10,12 +10,6 @@ fun main() {
         .start(wait = true)
 }
 
-fun test() {
-    // TODO: Unit-tests 
-    // TODO: How optimizer in postgres works 
-    // TODO: change getFlightsAirports to recursive 
-}
-
 fun Application.module() {
     configureRouting()
 }
