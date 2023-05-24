@@ -4,10 +4,10 @@ import d5.dto.ParameterFlight
 import d5.dto.Seat
 import d5.dto.UnitFlight
 import d5.dto.ticket
-import java.sql.Connection
-import java.sql.DriverManager
 import d5.entity.Airport
 import d5.entity.Flight
+import java.sql.Connection
+import java.sql.DriverManager
 import java.util.*
 
 
@@ -187,6 +187,7 @@ class Postgres {
             }
         }
         if (status == "Arrived") {
+            throw RuntimeException("Flight already arrived")
             return ticket("", 0.0)
         }
 

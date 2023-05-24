@@ -17,6 +17,8 @@ repositories {
 dependencies {
     implementation("io.ktor:ktor-server-core-jvm:2.3.0")
     implementation("io.ktor:ktor-server-swagger:2.3.0")
+    implementation("top.jfunc.json:Json-Gson:1.0")
+    implementation("com.google.code.gson:gson:2.10.1")
     testImplementation(kotlin("test"))
     implementation(kotlin("stdlib-jdk8"))
     implementation("io.ktor:ktor-server-core:2.3.0")
@@ -29,6 +31,8 @@ dependencies {
     // mockk
     testImplementation("io.mockk:mockk:1.12.0")
     implementation("org.postgresql:postgresql:42.2.27")
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
+
 }
 
 tasks.test {

@@ -35,7 +35,7 @@ fun Application.configureRouting() {
                 result.addAll(service.getAirports())
             }
             if (result.isEmpty()) {
-                call.respondText("No airports found")
+                call.respond(HttpStatusCode.BadRequest, "No airports found")
             } else {
                 call.respond(Json.encodeToString(result))
             }
